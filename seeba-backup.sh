@@ -12,7 +12,7 @@ rsync -av --delete --update "$seebaUploadDir/" "$backupDir/seebaUploads"
 echo "[ rsync ] succesfully synced uploads from seeba to backup drive" >> "$backupDir/seeba-backup-log"
 
 mysqldump --no-tablespaces seeba_db | gzip > "$backupDir/seeba.sql.gz"
-echo "[ sqldump ] db zipped and storedd in backup drive" >> "$backupDir/seeba-backup-log"
+echo "[ sqldump ] db zipped and stored in backup drive" >> "$backupDir/seeba-backup-log"
 
 cp $seebaENV "$backupDir/seeba-env"
 echo "[ copy ] .env backed up to drive" >> "$backupDir/seeba-backup-log"
@@ -23,4 +23,4 @@ echo "[ copy ] systdemd config backed up to drive" >> "$backupDir/seeba-backup-l
 end=$(date +%s)
 t=$((end - start))
 
-echo "[ End Backup ] backup completed in ${t} seconds" >> "$backupDir/seeba-backup-log"
+echo "[ End Backup ] backup completed in ${t}s" >> "$backupDir/seeba-backup-log"
