@@ -2,6 +2,7 @@
 
 start=$(date +%s)
 logfile="cloudlog-backup-log"
+source "$(dirname "$0")/environment"
 
 exec > >(tee -a "$logfile" | ssh -i "$keyPath" ass@"$backupAddr" "cat >> '$backupDir/cloudlog-backup-log'") 2>&1
 
@@ -9,7 +10,7 @@ exec > >(tee -a "$logfile" | ssh -i "$keyPath" ass@"$backupAddr" "cat >> '$backu
 echo "[ Start Backup ] beginning cloudlog backup - $(date)"
 
 set -e
-source "$(dirname "$0")/environment"
+
 
 mysqldump --single-transaction --no-tablespaces cloudlog_db \
   | gzip \
