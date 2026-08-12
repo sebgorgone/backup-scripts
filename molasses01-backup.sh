@@ -12,6 +12,9 @@ echo "[ rsync ] successfully synced msysm-scripts to backup drive" >>"$backupDir
 rsync -av --delete --update "$HOME/backup-scripts/" "$backupDir/backup-scripts"
 echo "[ rsync ] successfully synced backup-scripts to backup drive" >>"$backupDir/molasses01-backup-log"
 
+crontab -l >"$backupDir/$(whoami)-crontab"
+echo "[ sync ] succesfully backed up $(whoami)'s crontab file"
+
 cp "$HOME/.ssh/m01-key" "$backupDir/keys/"
 echo "[ cp ] successfully backed up m01-key" >>"$backupDir/molasses01-backup-log"
 
