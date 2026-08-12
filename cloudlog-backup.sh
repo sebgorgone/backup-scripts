@@ -17,6 +17,7 @@ sshOptions=(
   -i "$keyPath"
   -o BatchMode=yes
   -o ConnectTimeout=15
+  -o StrictHostKeyChecking=accept-new
 )
 cloudlogHost="ass@$cloudLogAddr"
 backupHost="ass@$backupAddr"

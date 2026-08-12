@@ -24,9 +24,10 @@ cloudlogENV=/home/ass/Cloud-Log/Server/.env
 cloudlogSystemdConf=/etc/systemd/system/cloudlog-server.service
 ```
 
-The `ass` account and configured key are used for both SSH endpoints. Before
-running unattended, add both hosts to the invoking user's `known_hosts` file
-and confirm that public-key authentication works with `BatchMode=yes`.
+The `ass` account and configured key are used for both SSH endpoints. On the
+first connection, SSH adds new host keys to the invoking user's `known_hosts`
+file. Changed host keys are still rejected and must be verified and updated
+manually. Confirm that public-key authentication works with `BatchMode=yes`.
 The Cloudlog host must allow `ass` to run `mysqldump` for `cloudlog_db` without
 an interactive database password. The backup server must allow `ass` to write
 to `backupDir`.
