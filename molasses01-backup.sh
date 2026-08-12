@@ -12,8 +12,14 @@ echo "[ rsync ] successfully synced msysm-scripts to backup drive" >>"$backupDir
 rsync -av --delete --update "$HOME/backup-scripts/" "$backupDir/backup-scripts"
 echo "[ rsync ] successfully synced backup-scripts to backup drive" >>"$backupDir/molasses01-backup-log"
 
+cat /etc/systemd/system/start-tunnels.service >"$backupDir/molasses01-start_tunnels-systemd"
+echo "[ cat ] successfully synced start_tunnels config to backup drive" >>"$backupDir/molasses01-backup-log"
+
+cat /etc/samba/smb.conf >"$backupDir/molasses01-smb.conf"
+echo "[ cat ] successfully synced smb.conf to backup drive" >>"$backupDir/molasses01-backup-log"
+
 crontab -l >"$backupDir/$(whoami)-crontab"
-echo "[ sync ] succesfully backed up $(whoami)'s crontab file"
+echo "[ sync ] succesfully backed up $(whoami)'s crontab file" >>"$backupDir/molasses01-backup-log"
 
 cp "$HOME/.ssh/m01-key" "$backupDir/keys/"
 echo "[ cp ] successfully backed up m01-key" >>"$backupDir/molasses01-backup-log"

@@ -39,3 +39,16 @@ Each successful run atomically replaces these files on the backup server:
 
 Stdout and stderr are streamed over SSH and appended directly to
 `backupDir/cloudlog-backup-log`. No local log file is written.
+
+## Molasses01 root backup
+
+`sudo-molasses01-backup.sh` backs up root-owned system configuration and the
+root crontab. Run it from root's crontab or invoke it manually with:
+
+```bash
+sudo ./sudo-molasses01-backup.sh
+```
+
+The script exits with a clear error when run without root privileges. All
+stdout, stderr, step status, and final success or failure information is
+appended to `backupDir/sudo-molasses01-backup-log`.
