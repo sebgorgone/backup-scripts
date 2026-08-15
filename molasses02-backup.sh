@@ -20,6 +20,10 @@ source "$scriptDir/environment"
 : "${molasses02RootCrontabBackupPath:?molassesRootCrontabBackupPath must be configured}"
 : "${keyPath:?keyPath must be configured}"
 : "${backupAddr:?backupAddr must be configured}"
+: "${molasses02SudoersPath:?molasses02SudoersPath must be configured}"
+: "${molasses02SudoersBackupPath:?molasses02SudoersBackupPath must be configured}"
+: "${molasses02FstabPath:?molasses02SudoersPath must be configured}"
+: "${molasses02FstabBackupPath:?molasses02SudoersBackupPath must be configured}"
 
 sshOptions=(
   -i "$keyPath"
@@ -134,6 +138,12 @@ echo "[ copy ] successfully backed up the root user's crontab file"
 
 copyCommandOutput "$molasses02UserCrontabBackupPath" crontab -u ass -l
 echo "[ copy ] successfully backed up the ass user's crontab file"
+
+copyLocalFile "$molasses02SudoersPath" "$molasses02SudoersBackupPath"
+echo "[ copy ] successfully backed up the sudoers file"
+
+copyLocalFile "$molasses02FstabPath" "$molasses02FstabBackupPath"
+echo "[ copy ] successfully backed up the fstab file"
 
 end=$(date +%s)
 t=$((end - start))
