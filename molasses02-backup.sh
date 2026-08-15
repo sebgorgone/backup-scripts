@@ -8,7 +8,7 @@ scriptDir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$scriptDir/environment"
 
 : "${backupDir:?backupDir must be configured}"
-: "${molasses02LogPath:?molassesLogPath must be configured}"
+: "${molasses02LogPath:?molasses02LogPath must be configured}"
 : "${startTunnelsServicePath:?startTunnelsServicePath must be configured}"
 : "${molasses02StartTunnelsServiceBackupPath:?startTunnelsServiceBackupPath must be configured}"
 : "${molasses02UserCrontabBackupPath:?molassesUserCrontabBackupPath must be configured}"
@@ -16,10 +16,10 @@ source "$scriptDir/environment"
 : "${keyPath:?keyPath must be configured}"
 : "${backupAddr:?backupAddr must be configured}"
 
-if [[ ! -d $backupDir ]]; then
-  echo "[ Error ] backup directory does not exist: $backupDir" >&2
-  exit 1
-fi
+# if [[ ! -d $backupDir ]]; then
+#   echo "[ Error ] backup directory does not exist: $backupDir" >&2
+#   exit 1
+# fi
 
 exec >>"$molasses02LogPath" 2>&1
 
