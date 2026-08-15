@@ -47,6 +47,11 @@ sudoersBackupPath=$backupDir/molasses01-sudoers
 rootCrontabBackupPath=$backupDir/molasses01-root-crontab
 fstabPath=/etc/fstab
 fstabBackupPath=$backupDir/molasses01-fstab
+
+molasses02LogPath=$backupDir/molasses02-backup-log
+molasses02StartTunnelsServiceBackupPath=$backupDir/molasses02-start_tunnels-systemd
+molasses02UserCrontabBackupPath=$backupDir/ass-molasses02-crontab
+molasses02RootCrontabBackupPath=$backupDir/root-molasses02-crontab
 ```
 
 The `ass` account and configured key are used for both SSH endpoints. On the
@@ -120,3 +125,15 @@ The script exits with a clear error when run without root privileges. All
 stdout, stderr, step status, and final success or failure information is
 appended to `sudoMolassesLogPath`. Its source, destination, and log paths are
 configured in the same `environment` file as the non-root backup.
+
+## Molasses02 backup
+
+`molasses02-backup.sh` is intended to run as `root` on the source host. It
+streams the configured `start_tunnels.service`, the root crontab, and the `ass`
+user's crontab to the backup server over SSH. Like the Cloudlog and RigDB
+scripts, it does not require a locally mounted `backupDir`.
+
+The script validates that `ass@$backupAddr:$backupDir` exists and is writable
+before starting. Stdout and stderr are then appended directly to
+`molasses02LogPath` on the backup host. Successful file and crontab backups are
+written atomically via a temporary remote path and then promoted into place.

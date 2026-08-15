@@ -5,6 +5,11 @@ set -euo pipefail
 start=$(date +%s)
 scriptDir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
+if ((EUID != 0)); then
+  echo "[ Error ] molasses02-backup.sh must be run as root" >&2
+  exit 1
+fi
+
 source "$scriptDir/environment"
 
 : "${backupDir:?backupDir must be configured}"
@@ -16,12 +21,74 @@ source "$scriptDir/environment"
 : "${keyPath:?keyPath must be configured}"
 : "${backupAddr:?backupAddr must be configured}"
 
-# if [[ ! -d $backupDir ]]; then
-#   echo "[ Error ] backup directory does not exist: $backupDir" >&2
-#   exit 1
-# fi
+sshOptions=(
+  -i "$keyPath"
+  -o BatchMode=yes
+  -o ConnectTimeout=15
+  -o StrictHostKeyChecking=accept-new
+)
+backupHost="ass@$backupAddr"
+runToken="$(date +%s)-$$"
+activeBackupTemp=
 
-# exec >>"$molasses02LogPath" 2>&1
+quoteRemote() {
+  printf "'%s'" "${1//\'/\'\\\'\'}"
+}
+
+streamBackupTemp() {
+  local tempPath tempPathQuoted
+  tempPath=$1
+  tempPathQuoted=$(quoteRemote "$tempPath")
+
+  ssh "${sshOptions[@]}" "$backupHost" \
+    "set -eu
+temp=$tempPathQuoted
+trap 'rm -f -- \"\$temp\"' 0 HUP INT TERM
+umask 077
+cat >\"\$temp\"
+trap - 0 HUP INT TERM"
+}
+
+promoteBackupTemp() {
+  local tempPath destinationPath tempPathQuoted destinationPathQuoted
+  tempPath=$1
+  destinationPath=$2
+  tempPathQuoted=$(quoteRemote "$tempPath")
+  destinationPathQuoted=$(quoteRemote "$destinationPath")
+
+  ssh "${sshOptions[@]}" "$backupHost" \
+    "mv -f -- $tempPathQuoted $destinationPathQuoted"
+}
+
+removeBackupTemp() {
+  local tempPathQuoted
+  tempPathQuoted=$(quoteRemote "$1")
+  ssh "${sshOptions[@]}" "$backupHost" "rm -f -- $tempPathQuoted"
+}
+
+copyLocalFile() {
+  local sourcePath destinationPath
+  sourcePath=$1
+  destinationPath=$2
+  activeBackupTemp="${destinationPath}.tmp.${runToken}"
+
+  cat -- "$sourcePath" |
+    streamBackupTemp "$activeBackupTemp"
+  promoteBackupTemp "$activeBackupTemp" "$destinationPath"
+  activeBackupTemp=
+}
+
+copyCommandOutput() {
+  local destinationPath
+  destinationPath=$1
+  shift
+  activeBackupTemp="${destinationPath}.tmp.${runToken}"
+
+  "$@" |
+    streamBackupTemp "$activeBackupTemp"
+  promoteBackupTemp "$activeBackupTemp" "$destinationPath"
+  activeBackupTemp=
+}
 
 handleExit() {
   local status=$?
@@ -32,25 +99,41 @@ handleExit() {
     end=$(date +%s)
     elapsed=$((end - start))
     echo "[ Error ] molasses02 backup failed after ${elapsed}s (exit $status)"
+    if [[ -n $activeBackupTemp ]]; then
+      removeBackupTemp "$activeBackupTemp" ||
+        echo "[ Error ] unable to remove remote temporary file: $activeBackupTemp"
+    fi
   fi
 
   exit "$status"
 }
 
+backupDirQuoted=$(quoteRemote "$backupDir")
+if ! ssh "${sshOptions[@]}" "$backupHost" \
+  "set -eu
+backupDir=$backupDirQuoted
+[ -d \"\$backupDir\" ] && [ -w \"\$backupDir\" ]"; then
+  echo "[ Error ] remote backup directory is not writable: ass@$backupAddr:$backupDir" >&2
+  exit 1
+fi
+
+remoteLogPath=$(quoteRemote "$molasses02LogPath")
+exec > >(
+  ssh "${sshOptions[@]}" "$backupHost" "cat >> $remoteLogPath"
+) 2>&1
+
 trap handleExit EXIT
 
 echo "[ Start Backup ] running molasses02 backup script - $(date)"
 
-scp -i $keyPath $startTunnelsServicePath ass@"$backupAddr":"$molasses02startTunnelsServiceBackupPath"
-echo "[ scp ] successfully synced start_tunnels config to backup drive"
+copyLocalFile "$startTunnelsServicePath" "$molasses02StartTunnelsServiceBackupPath"
+echo "[ copy ] successfully synced start_tunnels config to backup host"
 
-crontab -l >/tmp/root-molasses02-crontab
-scp -i "$keyPath" /tmp/root-molasses02-crontab ass@"$backupAddr":"$molasses02RootCrontabBackupPath"
-echo "[ scp ] successfully backed up the root user's crontab file"
+copyCommandOutput "$molasses02RootCrontabBackupPath" crontab -l
+echo "[ copy ] successfully backed up the root user's crontab file"
 
-sudo -u ass crontab -l >/tmp/$(whoami)-molasses02-crontab
-scp -i "$keyPath" /tmp/ass-molasses02-crontab ass@"$backupAddr":"$molasses02UserCrontabBackupPath"
-echo "[ scp ] successfully backed up the user crontab file"
+copyCommandOutput "$molasses02UserCrontabBackupPath" crontab -u ass -l
+echo "[ copy ] successfully backed up the ass user's crontab file"
 
 end=$(date +%s)
 t=$((end - start))
