@@ -66,6 +66,36 @@ Each successful run atomically replaces these files on the backup server:
 Stdout and stderr are streamed over SSH and appended directly to
 `backupDir/cloudlog-backup-log`. No local log file is written.
 
+## RigDB backup
+
+`rigdb-backup.sh` copies the SQLite database, environment file, and systemd
+configuration from the RigDB host to the backup server. File backups use a
+temporary destination and are atomically promoted after a successful transfer.
+The script also runs `rsync` on the RigDB host to mirror the contents of the
+uploads directory to the backup server.
+
+In addition to `keyPath`, `backupAddr`, and `backupDir`, the gitignored
+`environment` file must define:
+
+```bash
+rigDbAddr=192.168.1.109
+rigDbENV=/home/ass/uconnSkydivingRigDB/server/.env
+rigDbSystemdConf=/etc/systemd/system/rigdb-server.service
+rigDbUploads=/home/ass/uconnSkydivingRigDB/server/uploads
+rigDbDatabase=/home/ass/uconnSkydivingRigDB/server/rig.db
+rigDbBackupKeyPath=$HOME/.ssh/m01-key
+```
+
+`keyPath` is read on the machine running the script and authenticates its SSH
+connections to both servers. `rigDbBackupKeyPath` is read on the RigDB host and
+authenticates the host-to-host uploads transfer. The RigDB host must have
+`rsync` installed and must be able to reach the backup server as `ass`.
+
+Each successful run replaces `rig.db`, `rigDB-env`, and `rigDb-systemd` in
+`backupDir`. It mirrors uploads to `backupDir/rigDB-uploads/` with `--delete`,
+so files removed from the source are also removed from the backup. Output is
+appended to `backupDir/rigDB-backup-log`.
+
 ## Molasses01 backup
 
 `molasses01-backup.sh` backs up the configured user files, system
