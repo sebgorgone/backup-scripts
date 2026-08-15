@@ -13,13 +13,18 @@ fi
 source "$scriptDir/environment"
 
 : "${backupDir:?backupDir must be configured}"
+: "${sudoMolassesLogPath:?sudoMolassesLogPath must be configured}"
+: "${sudoersPath:?sudoersPath must be configured}"
+: "${sudoersBackupPath:?sudoersBackupPath must be configured}"
+: "${rootCrontabBackupPath:?rootCrontabBackupPath must be configured}"
+: "${fstabPath:?fstabPath must be configured}"
+: "${fstabBackupPath:?fstabBackupPath must be configured}"
 if [[ ! -d $backupDir ]]; then
   echo "[ Error ] backup directory does not exist: $backupDir" >&2
   exit 1
 fi
 
-logPath="$backupDir/sudo-molasses01-backup-log"
-exec >>"$logPath" 2>&1
+exec >>"$sudoMolassesLogPath" 2>&1
 
 handleExit() {
   local status=$?
@@ -39,13 +44,13 @@ trap handleExit EXIT
 
 echo "[ Start Backup ] running molasses01 root backup script - $(date)"
 
-cat /etc/sudoers >"$backupDir/molasses01-sudoers"
+cat -- "$sudoersPath" >"$sudoersBackupPath"
 echo "[ cat ] sudoers backed up successfully"
 
-crontab -l >"$backupDir/molasses01-root-crontab"
+crontab -l >"$rootCrontabBackupPath"
 echo "[ cron ] root's crontab backed up successfully"
 
-cat /etc/fstab >"$backupDir/molasses01-fstab"
+cat -- "$fstabPath" >"$fstabBackupPath"
 echo "[ cat ] fstab backed up successfully"
 
 end=$(date +%s)
