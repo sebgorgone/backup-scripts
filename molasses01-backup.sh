@@ -79,6 +79,9 @@ echo "[ cp ] successfully backed up ghCD"
 cp -- "$ed25519KeyPath" "$ed25519KeyBackupPath"
 echo "[ cp ] successfully backed up id_ed25519"
 
+cp -- "$msysmConfigPath" "$msysmConfigBackupPath"
+echo "[ cp ] succesfully backed up molassysmon config"
+
 end=$(date +%s)
 t=$((end - start))
 
