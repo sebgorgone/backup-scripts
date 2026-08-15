@@ -21,7 +21,7 @@ source "$scriptDir/environment"
 #   exit 1
 # fi
 
-exec >>"$molasses02LogPath" 2>&1
+# exec >>"$molasses02LogPath" 2>&1
 
 handleExit() {
   local status=$?
